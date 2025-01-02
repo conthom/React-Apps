@@ -8,7 +8,8 @@ export default function Index() {
                 <title>Matrix reduction practice</title>
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <Header />
+            
+
         </div>
     );
 }

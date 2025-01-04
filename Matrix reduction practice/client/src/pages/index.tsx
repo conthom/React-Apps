@@ -1,5 +1,7 @@
 import Head from 'next/head';
-import Header from '../components/Header';
+import Matrix from '../components/Matrix';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function Index() {
     return (
@@ -8,8 +10,9 @@ export default function Index() {
                 <title>Matrix reduction practice</title>
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            
-
+            <Header/>
+            <Matrix/>
+            <Footer/>
         </div>
     );
 }

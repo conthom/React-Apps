@@ -12,15 +12,13 @@ export default function Header(){
             <li><Link href="/about">About</Link></li>
             </ul>
         </nav>
-        <div className="flex items-center space-x-2">
-            <h1>Connor Thompson GitHub</h1>
+        <div className="hover:underline flex items-center space-x-4">
+            <a href="https://github.com/conthom" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2">
+            <h1>Check out my GitHub!</h1>
             <div className="invert">
-            <a href="https://github.com/conthom" target="_blank" rel="noopener noreferrer">
-                <img src="/github-icon.png" alt="GitHub" 
-                width='25'
-                height='25'/>
-            </a>
+                <img src="/github-icon.png" alt="GitHub" width='25' height='25'/>
             </div>
+            </a>
         </div>
     </header>
     );

@@ -8,8 +8,8 @@ export default function Header(){
         </div>
         <nav className="header-nav">
             <ul className="flex space-x-4">
-            <li><Link href="/">Practice</Link></li>
-            <li><Link href="/about">About</Link></li>
+            <li className="hover:underline"><Link href="/">Practice</Link></li>
+            <li className="hover:underline"><Link href="/about">About</Link></li>
             </ul>
         </nav>
         <div className="hover:underline flex items-center space-x-4">

@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
+
 export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; time: number }) {
     const [stopwatch, setTimer] = useState(time || 0); // Fallback to 0 if time is undefined
     const [selectedRow, setSelectedRow] = useState<number | null>(null);
+    const [selectedRow2, setSelectedRow2] = useState<number | null>(null);
+    const [selectedOperation, setSelectedOperation] = useState<string | null>(null);
+    const [multiplier, setMultiplier] = useState<string>("1");
+    const [currentMatrix, setCurrentMatrix] = useState<number[][]>(matrix);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -11,17 +16,59 @@ export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; 
         return () => clearInterval(timer); // Cleanup the interval
     }, []);
 
+    const operateRows = (matrix: number[][], row1: number, row2: number, operation: string, multiplier: number): number[][] => {
+        const newMatrix = matrix.map((row) => [...row]); // Create a copy of the matrix
+        for (let i = 0; i < newMatrix[row1].length; i++) {
+            if (operation === "+") {
+                newMatrix[row1][i] += multiplier * newMatrix[row2][i];
+            } else if (operation === "-") {
+                newMatrix[row1][i] -= multiplier * newMatrix[row2][i];
+            }
+        }
+        return newMatrix;
+    };
+
+    const updateMatrix = () => {
+        if (selectedRow !== null && selectedRow2 !== null && selectedOperation) {
+            const newMatrix = operateRows(currentMatrix, selectedRow, selectedRow2, selectedOperation, parseFloat(multiplier));
+            setCurrentMatrix(newMatrix);
+        }
+    };
+
+    useEffect(() => {
+        updateMatrix();
+    }, []);
+
     return (
         <div className="min-h-screen flex flex-col items-center justify-center">    
             <div className="mb-4 text-lg font-bold">Time: {stopwatch}s</div>
             <div className="max-w-2xl w-full bg-gray-800 rounded-lg shadow-md p-6">
             <table className="w-full border-collapse border border-gray-500 text-gray-200 table-fixed">
                 <tbody>
-                {matrix.map((row, i) => (
+                {currentMatrix.map((row, i) => (
                     <tr
-                    className={`hover:bg-gray-400 cursor-pointer ${selectedRow === i ? "bg-gray-600" : ""}`}
+                    className={`hover:bg-gray-400 cursor-pointer ${selectedRow === i ? "bg-gray-500" : ""} ${selectedRow2 === i ? "bg-gray-600" : ""}`}
                     key={i}
-                    onClick={() => setSelectedRow(i)}
+                    onClick={() => {
+                        if (selectedRow === i) {
+                            if (selectedRow2 !== null){
+                                setSelectedRow(selectedRow2);
+                                setSelectedRow2(null);
+                            }
+                            else{
+                                setSelectedRow(null);
+                            }
+                        } else if (selectedRow2 === i) {
+                            setSelectedRow2(null);
+                        } else if (selectedRow === null) {
+                            setSelectedRow(i);
+                        } else if (selectedRow2 === null) {
+                            setSelectedRow2(i);
+                        } else {
+                            setSelectedRow(selectedRow2);
+                            setSelectedRow2(i);
+                        }
+                    }}
                     >
                     {row.map((value, j) => (
                         <td
@@ -34,16 +81,78 @@ export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; 
                 ))}
                 </tbody>
             </table>
+                <br></br>
+                <div className="flex items-center justify-center mb-4">
+                    <div className="mr-4 text-lg">Row {selectedRow !== null ? selectedRow + 1 : "?"}</div>
+                    <div className="flex space-x-2">
+                        <button
+                            className={`font-bold py-2 px-4 rounded ${selectedOperation === "+" ? "bg-green-800" : "bg-green-500 hover:bg-green-800"}`}
+                            onClick={() => setSelectedOperation("+")}
+                        >
+                            +
+                        </button>
+                        <button
+                            className={`font-bold py-2 px-4 rounded ${selectedOperation === "-" ? "bg-red-800" : "bg-red-500 hover:bg-red-800"}`}
+                            onClick={() => setSelectedOperation("-")}
+                        >
+                            −
+                        </button>
+                    </div>
+                    <div className="ml-4 text-lg">Row {selectedRow2 !== null ? selectedRow2 + 1 : "?"} x</div>
+                    <input
+                        type="text"
+                        className="ml-2 p-2 rounded bg-gray-800 text-white w-14"
+                        placeholder="Multiplier"
+                        value={multiplier}
+                        onChange={(e) => setMultiplier(e.target.value)}
+                    />
             </div>
-            <h2> Row selected: {selectedRow !== null ? selectedRow + 1 : "None"} </h2>
+            <div className="flex justify-center mt-4">
+                <button
+                    className="bg-blue-900 rounded-lg shadow-md text-xl py-2 px-4 hover:bg-blue-500 mr-4"
+                    type="button"
+                    onClick={() => {
+                        if (selectedRow !== null && selectedRow2 !== null) {
+                            const newMatrix = [...currentMatrix];
+                            [newMatrix[selectedRow], newMatrix[selectedRow2]] = [newMatrix[selectedRow2], newMatrix[selectedRow]];
+                            setCurrentMatrix(newMatrix);
+                            console.log("Rows swapped");
+                        }
+                    }}
+                >
+                    Swap Rows
+                </button>
+                <button
+                    className="bg-gray-900 rounded-lg shadow-md text-xl py-2 px-4 hover:bg-gray-500"
+                    type="button"
+                    onClick={() => {
+                        updateMatrix();
+                        console.log("Matrix operation applied");
+                    }}
+                >
+                    Apply
+                </button>
+            </div>
+            </div>
+            <br></br>
+
+            <h2> Row selected: <b>({selectedRow !== null ? selectedRow + 1 : "None"})</b> and <b>({selectedRow2 !== null ? selectedRow2 + 1 : "None"})</b> </h2>
             <br></br>
             <button
-            className="hover:bg-gray-400 bg-gray-900 rounded-lg shadow-md py-2 px-4"
+            className="hover:bg-gray-500 bg-gray-800 rounded-lg shadow-md py-2 px-4"
             type="button"
             onClick={() => window.location.href = '/'}
             >
             Go Back
             </button>
+            <div className="mt-4">
+                <h3 className="text-lg font-bold mb-2">Instructions:</h3>
+                <ul className="list-disc list-inside">
+                    <li>Click on two rows to select them.</li>
+                    <li>Choose an operation (+ or -) and set a multiplier.</li>
+                    <li>Click "Apply" to perform the operation on the selected rows.</li>
+                </ul>
+            </div>
         </div>
     );
 }

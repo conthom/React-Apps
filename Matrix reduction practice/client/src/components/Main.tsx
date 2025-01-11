@@ -4,7 +4,7 @@ import Difficulty from "./Difficulty";
 
 export default function Main() {
     const [isLoading, setIsLoading] = useState(false);
-    const [response, setResponse] = useState<{ matrix: number[][]; time: number } | null>(null);
+    const [response, setResponse] = useState<{ matrix: number[][]} | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     return (
@@ -19,7 +19,7 @@ export default function Main() {
             ) : (
                 Array.isArray(response.matrix) && response.matrix.length > 0 && (
                     <div>
-                        <Matrix matrix={response.matrix} time={response.time} />
+                        <Matrix matrix={response.matrix} />
                     </div>
                 )
             )}

@@ -59,7 +59,7 @@ export default function Difficulty({
     return (
         <div className="max-w-lg w-full bg-gray-800 rounded-lg shadow-md p-6">
             <div className="flex justify-center mt-4 text-lg font-bold">
-                <h2>Ready to practice RREF matrix reduction?</h2>
+                <h2>Ready to practice matrix reduction?</h2>
             </div>
             <div className="flex justify-center mt-4">
                 <p>Try to set a new speed record!</p>

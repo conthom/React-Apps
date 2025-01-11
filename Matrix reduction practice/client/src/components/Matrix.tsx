@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import fraction from "fraction.js";
-export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; time: number }) {
-    const [stopwatch, setTimer] = useState(time || 0);
+export default function Matrix({ matrix = []}: { matrix: number[][]}) {
+    const [stopwatch, setTimer] = useState(0);
     const [selectedRow, setSelectedRow] = useState<number | null>(null);
     const [selectedRow2, setSelectedRow2] = useState<number | null>(null);
     const [selectedOperation, setSelectedOperation] = useState<string | null>(null);
     const [multiplier, setMultiplier] = useState<string>("1");
     const [rowMultiplier, setRowMultiplier] = useState<string>("");
     const [currentMatrix, setCurrentMatrix] = useState<number[][]>(matrix);
-
+    const [reducedMatrix, setReducedMatrix] = useState<number[][]>([]);
     useEffect(() => {
         const timer = setInterval(() => {
             setTimer((prev) => prev + 1);
@@ -25,8 +25,10 @@ export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; 
         }
         return parseFloat(value);
     };
-
     const operateRows = (matrix: number[][], row1: number, row2: number, operation: string, multiplier: number): number[][] => {
+        if (multiplier === 0 || isNaN(multiplier)) {
+            multiplier = 1;
+        }
         const newMatrix = matrix.map((row) => [...row]); // Create a copy of the matrix
         for (let i = 0; i < newMatrix[row1].length; i++) {
             if (operation === "+") {
@@ -51,6 +53,55 @@ export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; 
             const newMatrix = operateRows(currentMatrix, selectedRow, selectedRow2, selectedOperation, parseMultiplier(multiplier));
             setCurrentMatrix(newMatrix);
         }
+    };
+    const isReduced = async (): Promise<boolean> => {
+        if (reducedMatrix.length === 0) {
+            try {
+                // Flatten the matrix and determine its shape
+                const shape = [matrix.length, matrix[0].length];
+                const flatData = matrix.flat(); // Flatten the matrix
+    
+                // Construct the JSON payload
+                const payload = {
+                    matrix: {
+                        shape: shape,
+                        order: 0, // Assuming row-major order
+                        data: flatData
+                    }
+                };
+    
+                // Send the matrix with shape and data
+                const response = await fetch(`http://localhost:5000/check_rref`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+                console.log("Matrix sent to check_rref:", JSON.stringify(payload));
+    
+                // if (!response.ok) {
+                //     throw new Error('Failed to fetch reduced matrix');
+                // }
+    
+                const data = await response.json();
+    
+                console.log("Reduced matrix response:", data);
+    
+                if (!data.rref || data.rref.length === 0) {
+                    console.warn("Matrix is empty or undefined:", data);
+                }
+    
+                setReducedMatrix(data.rref);
+            } catch (err) {
+                console.error('Error fetching reduced matrix:', err);
+            }
+        }
+    
+        // Compare the currentMatrix and reducedMatrix
+        const reduced = JSON.stringify(currentMatrix) === JSON.stringify(reducedMatrix);
+        console.log("Matrix reduced?:", reduced);
+        return reduced;
     };
 
     useEffect(() => {
@@ -114,12 +165,11 @@ export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; 
                         onClick={() => {
                             if (selectedRow !== null) {
                                 const newMatrix = multiplyRow(currentMatrix, selectedRow, parseMultiplier(rowMultiplier));
-                                console.log(matrix);
                                 setCurrentMatrix(newMatrix);
-                                console.log(matrix);
                                 setSelectedRow(null);
                                 setRowMultiplier("");
                                 console.log("Row multiplied");
+                                isReduced();
                             }
                         }}
                     >
@@ -163,6 +213,7 @@ export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; 
                             setSelectedRow(null);
                             setSelectedRow2(null);
                             console.log("Rows swapped");
+                            isReduced();
                         }
                     }}
                 >
@@ -175,8 +226,9 @@ export default function Matrix({ matrix = [], time = 0 }: { matrix: number[][]; 
                         applyOperation();
                         setSelectedRow(null);
                         setSelectedRow2(null);
-                        setMultiplier("");
+                        setMultiplier("1");
                         console.log("Matrix operation applied");
+                        isReduced();
                     }}
                 >
                     Apply

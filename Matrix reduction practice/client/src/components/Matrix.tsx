@@ -105,7 +105,7 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
     useEffect(() => {
         if (currentMatrix.length > 0) {
             if(reducedMatrix.length === 0){
-                fetchReduced(); // Get reduced matrix and set it
+                fetchReduced().then((reduced) => setReducedMatrix(reduced)); // Get reduced matrix and set it
             }
             setCurrentMatrix(roundMatrix(currentMatrix));
             console.log("Current Matrix after update:", JSON.stringify(currentMatrix));
@@ -121,7 +121,6 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
                 // Flatten the matrix and determine its shape
                 const shape = [matrix.length, matrix[0].length];
                 const flatData = matrix.flat(); // Flatten the matrix
-    
                 // Construct the JSON payload
                 const payload = {
                     matrix: {
@@ -145,7 +144,7 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
                 if (!data.rref || data.rref.length === 0) {
                     console.warn("Matrix is empty or undefined:", data);
                 }
-                setReducedMatrix(data.rref);
+                return data.rref;
             } catch (err) {
                 console.error('Error fetching reduced matrix:', err);
             }

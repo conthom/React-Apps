@@ -40,19 +40,12 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
         const timer = setInterval(() => {
             setStopwatch((prev) => prev + 1);
         }, 1000);
-
         return () => clearInterval(timer);
     }, []);
-    // Function to round a number to a specific precision
-    const roundToPrecision = (value: number, precision: number = 12, epsilon: number = 1e-10): number => {
-        const roundedValue =
-            Math.abs(value) < epsilon ? 0 : Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
-        // if (process.env.NODE_ENV === "development") {
-        //     console.log("Rounding value:", value, "to:", roundedValue);
-        // }
-        return roundedValue;
+    const roundToPrecision = (value: number, precision: number = 8, epsilon: number = 1e-10): number => {
+        if (Math.abs(value) < epsilon) return 0;
+        return parseFloat(value.toFixed(precision));
     };
-
     const roundMatrix = (matrix: number[][], precision: number = 12): number[][] => {
         return matrix.map(row => row.map(value => roundToPrecision(value, precision)));
     };
@@ -77,7 +70,7 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
                 newMatrix[row1][i] -= multiplier * newMatrix[row2][i];
             }
         }
-        return newMatrix;
+        return roundMatrix(newMatrix);
     };
 
     const multiplyRow = (matrix: number[][], row1: number, multiplier: number): number[][] => {
@@ -90,14 +83,14 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
         for (let i = 0; i < newMatrix[row1].length; i++) {
             newMatrix[row1][i] = newMatrix[row1][i] * multiplier;
         }
-        return newMatrix;
+        return roundMatrix(newMatrix);
     }
     };
     // Function to apply the operation on the selected rows
     const applyOperation = async () => {
         if (selectedRow !== null && selectedRow2 !== null && selectedOperation) {
             const newMatrix = operateRows(currentMatrix, selectedRow, selectedRow2, selectedOperation, parseMultiplier(multiplier));
-            setCurrentMatrix(newMatrix);
+            setCurrentMatrix(roundMatrix(newMatrix));
         }
     };
     useEffect(() => {
@@ -143,11 +136,12 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
     useEffect(() => {
         // Check if the matrix is reduced after updates
         if (currentMatrix.length > 0 && reducedMatrix.length > 0) {
-            const roundedMatrix = roundMatrix(currentMatrix);
-            setCurrentMatrix(roundedMatrix);
-    
-            console.log("Current Matrix after update:", JSON.stringify(roundedMatrix));
-            const isReduced = JSON.stringify(roundedMatrix) === JSON.stringify(reducedMatrix);
+            console.log("Current Matrix after update:", JSON.stringify(currentMatrix));
+            const isReduced = currentMatrix.every((row, rowIndex) =>
+                row.every((value, colIndex) =>
+                    Math.abs(value - reducedMatrix[rowIndex][colIndex]) < 0.1
+                )
+            );
             console.log("Matrix reduced?:", isReduced);
             setIsMatrixReduced(isReduced);
         }
@@ -160,7 +154,6 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
     };
 
     return (
-        
         <div className="min-h-screen flex flex-col items-center justify-center relative"> 
             {isMatrixReduced && <EndingScreen timer={stopwatch} onRestart={() => setCurrentMatrix(matrix)} />}
             <div className="mb-4 text-lg font-bold">Time: {stopwatch}s</div>
@@ -196,7 +189,7 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
                 <td
                 key={`${i}-${j}`}
                 className="border border-gray-500 px-4 py-2 text-center text-xl" style={{height: '50px' }}>
-                {new fraction(roundToPrecision(value)).toFraction()}
+                {new fraction(value).toFraction()}
                 </td>
                 ))}
                 </tr>

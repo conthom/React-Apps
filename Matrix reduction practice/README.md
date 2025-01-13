@@ -1,4 +1,4 @@
-# Row Reduced Echelon Form Practice Platform
+# Matrix Reduction Practice Platform
 
 ![img](Screenshot_2.png)
 

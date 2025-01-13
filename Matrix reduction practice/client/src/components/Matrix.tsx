@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import fraction from "fraction.js";
-
+import EndingScreen from "./EndingScreen";
 /**
  * Matrix component for performing row operations on a given matrix.
  * 
@@ -35,18 +35,27 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
         matrix.map(row => row.map(value => Math.abs(value) < 1e-5 ? 0 : value))
     );
     const [reducedMatrix, setReducedMatrix] = useState<number[][]>([]);
+    const [isMatrixReduced, setIsMatrixReduced] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
             setTimer((prev) => prev + 1);
         }, 1000);
 
-        return () => clearInterval(timer); // Cleanup the interval
+        return () => clearInterval(timer);
     }, []);
     // Function to round a number to a specific precision
-    const roundToPrecision = (value: number, precision: number = 12): number => {
-        const factor = Math.pow(10, precision);
-        return Math.round(value * factor) / factor;
+    const roundToPrecision = (value: number, precision: number = 12, epsilon: number = 1e-10): number => {
+        const roundedValue =
+            Math.abs(value) < epsilon ? 0 : Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
+        // if (process.env.NODE_ENV === "development") {
+        //     console.log("Rounding value:", value, "to:", roundedValue);
+        // }
+        return roundedValue;
+    };
+
+    const roundMatrix = (matrix: number[][], precision: number = 12): number[][] => {
+        return matrix.map(row => row.map(value => roundToPrecision(value, precision)));
     };
 
     const parseMultiplier = (value: string): number => {
@@ -98,9 +107,11 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
             if(reducedMatrix.length === 0){
                 fetchReduced(); // Get reduced matrix and set it
             }
+            setCurrentMatrix(roundMatrix(currentMatrix));
             console.log("Current Matrix after update:", JSON.stringify(currentMatrix));
             const reduced = JSON.stringify(currentMatrix) === JSON.stringify(reducedMatrix);
             console.log("Matrix reduced?:", reduced);
+            setIsMatrixReduced(reduced);
         }
     }, [currentMatrix]);
     // Function to get reduced matrix from backend
@@ -148,143 +159,144 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center">    
+        
+        <div className="min-h-screen flex flex-col items-center justify-center relative">    
+            {isMatrixReduced && <EndingScreen timer={stopwatch} onRestart={() => setCurrentMatrix(matrix)} />}
             <div className="mb-4 text-lg font-bold">Time: {stopwatch}s</div>
             <div className="max-w-2xl w-full bg-gray-800 rounded-lg shadow-md p-6">
             <table className="w-full border-collapse border border-gray-500 text-gray-200 table-fixed">
-                <tbody>
-                {currentMatrix.map((row, i) => (
-                    <tr
-                    className={`hover:bg-gray-400 cursor-pointer ${selectedRow === i ? "bg-gray-500" : ""} ${selectedRow2 === i ? "bg-gray-600" : ""}`}
-                    key={i}
-                    onClick={() => {
-                        if (selectedRow === i) {
-                            if (selectedRow2 !== null){
-                                setSelectedRow(selectedRow2);
-                                setSelectedRow2(null);
-                            }
-                            else{
-                                setSelectedRow(null);
-                            }
-                        } else if (selectedRow2 === i) {
-                            setSelectedRow2(null);
-                        } else if (selectedRow === null) {
-                            setSelectedRow(i);
-                        } else if (selectedRow2 === null) {
-                            setSelectedRow2(i);
-                        } else {
-                            setSelectedRow(selectedRow2);
-                            setSelectedRow2(i);
-                        }
-                    }}
-                    >
-                        
-                    {row.map((value, j) => (
-                        <td
-                        key={`${i}-${j}`}
-                        className="border border-gray-500 px-4 py-2 text-center text-xl" style={{height: '50px' }}>
-                        {new fraction(value === -0 ? 0 : value).toFraction()}
-                        </td>
-                    ))}
-                    </tr>
+            <tbody>
+            {currentMatrix.map((row, i) => (
+                <tr
+                className={`hover:bg-gray-400 cursor-pointer ${selectedRow === i ? "bg-gray-500" : ""} ${selectedRow2 === i ? "bg-gray-600" : ""}`}
+                key={i}
+                onClick={() => {
+                if (selectedRow === i) {
+                    if (selectedRow2 !== null){
+                    setSelectedRow(selectedRow2);
+                    setSelectedRow2(null);
+                    }
+                    else{
+                    setSelectedRow(null);
+                    }
+                } else if (selectedRow2 === i) {
+                    setSelectedRow2(null);
+                } else if (selectedRow === null) {
+                    setSelectedRow(i);
+                } else if (selectedRow2 === null) {
+                    setSelectedRow2(i);
+                } else {
+                    setSelectedRow(selectedRow2);
+                    setSelectedRow2(i);
+                }
+                }}
+                >
+                {row.map((value, j) => (
+                <td
+                key={`${i}-${j}`}
+                className="border border-gray-500 px-4 py-2 text-center text-xl" style={{height: '50px' }}>
+                {new fraction(roundToPrecision(value)).toFraction()}
+                </td>
                 ))}
-                </tbody>
+                </tr>
+            ))}
+            </tbody>
             </table>
-                <div className="flex items-center justify-center mb-4 bg-gray-900 rounded-lg">
-                    <div className="mr-4 text-lg">Multiply Row {selectedRow !== null && selectedRow2 === null ? (selectedRow + 1) : "?"} by:</div>
-                    <input
-                        type="text"
-                        className="text-center p-2 rounded bg-gray-800 text-white w-14"
-                        placeholder="Num"
-                        value={rowMultiplier}
-                        onChange={(e) => setRowMultiplier(e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, () => {
-                            if (selectedRow !== null) {
-                                setCurrentMatrix(multiplyRow(currentMatrix, selectedRow, parseMultiplier(rowMultiplier)));
-                                setSelectedRow(null);
-                                setRowMultiplier("");
-                                console.log("Row multiplied");
-                            }
-                        }
-                    )}
-                    />
-                    <button
-                        className="bg-blue-900 rounded-lg shadow-md text-xl py-2 px-4 hover:bg-blue-500 ml-4"
-                        type="button"
-                        onClick={() => {
-                            if (selectedRow !== null) {
-                                setCurrentMatrix(multiplyRow(currentMatrix, selectedRow, parseMultiplier(rowMultiplier)));
-                                setSelectedRow(null);
-                                setRowMultiplier("");
-                                console.log("Row multiplied");
-                            }
-                        }}
-                    >
-                        Apply
-                    </button>
+            <div className="flex items-center justify-center mb-4 bg-gray-900 rounded-lg">
+                <div className="mr-4 text-lg">Multiply Row {selectedRow !== null && selectedRow2 === null ? (selectedRow + 1) : "?"} by:</div>
+                <input
+                type="text"
+                className="text-center p-2 rounded bg-gray-800 text-white w-14"
+                placeholder="Num"
+                value={rowMultiplier}
+                onChange={(e) => setRowMultiplier(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, () => {
+                    if (selectedRow !== null) {
+                    setCurrentMatrix(multiplyRow(currentMatrix, selectedRow, parseMultiplier(rowMultiplier)));
+                    setSelectedRow(null);
+                    setRowMultiplier("");
+                    console.log("Row multiplied");
+                    }
+                }
+                )}
+                />
+                <button
+                className="bg-blue-900 rounded-lg shadow-md text-xl py-2 px-4 hover:bg-blue-500 ml-4"
+                type="button"
+                onClick={() => {
+                    if (selectedRow !== null) {
+                    setCurrentMatrix(multiplyRow(currentMatrix, selectedRow, parseMultiplier(rowMultiplier)));
+                    setSelectedRow(null);
+                    setRowMultiplier("");
+                    console.log("Row multiplied");
+                    }
+                }}
+                >
+                Apply
+                </button>
+            </div>
+            <div className="flex items-center justify-center mb-4">
+                <div className="mr-4 text-lg">Row {selectedRow !== null ? (selectedRow + 1) : "?"}</div>
+                <div className="flex space-x-2">
+                <button
+                    className={`font-bold py-2 px-4 rounded ${selectedOperation === "+" ? "bg-green-800" : "bg-green-500 hover:bg-green-800"}`}
+                    onClick={() => setSelectedOperation("+")}
+                >
+                    +
+                </button>
+                <button
+                    className={`font-bold py-2 px-4 rounded ${selectedOperation === "-" ? "bg-red-800" : "bg-red-500 hover:bg-red-800"}`}
+                    onClick={() => setSelectedOperation("-")}
+                >
+                    −
+                </button>
                 </div>
-                <div className="flex items-center justify-center mb-4">
-                    <div className="mr-4 text-lg">Row {selectedRow !== null ? (selectedRow + 1) : "?"}</div>
-                    <div className="flex space-x-2">
-                        <button
-                            className={`font-bold py-2 px-4 rounded ${selectedOperation === "+" ? "bg-green-800" : "bg-green-500 hover:bg-green-800"}`}
-                            onClick={() => setSelectedOperation("+")}
-                        >
-                            +
-                        </button>
-                        <button
-                            className={`font-bold py-2 px-4 rounded ${selectedOperation === "-" ? "bg-red-800" : "bg-red-500 hover:bg-red-800"}`}
-                            onClick={() => setSelectedOperation("-")}
-                        >
-                            −
-                        </button>
-                    </div>
-                    <div className="ml-4 text-lg">Row {selectedRow2 !== null ?(selectedRow2 + 1) : "?"} x</div>
-                    <input
-                        type="text"
-                        className="text-center ml-2 p-2 rounded bg-gray-800 text-white w-14"
-                        placeholder="1"
-                        value={multiplier}
-                        onChange={(e) => setMultiplier(e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, () => {
-                            applyOperation();
-                            setSelectedRow(null);
-                            setSelectedRow2(null);
-                            setMultiplier("1");
-                            console.log("Matrix operation applied");
-                        })}
-                    />
+                <div className="ml-4 text-lg">Row {selectedRow2 !== null ?(selectedRow2 + 1) : "?"} x</div>
+                <input
+                type="text"
+                className="text-center ml-2 p-2 rounded bg-gray-800 text-white w-14"
+                placeholder="1"
+                value={multiplier}
+                onChange={(e) => setMultiplier(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, () => {
+                    applyOperation();
+                    setSelectedRow(null);
+                    setSelectedRow2(null);
+                    setMultiplier("1");
+                    console.log("Matrix operation applied");
+                })}
+                />
             </div>
             <div className="flex justify-center mt-4">
-                <button
-                    className="bg-blue-900 rounded-lg shadow-md text-xl py-2 px-4 hover:bg-blue-500 mr-4"
-                    type="button"
-                    onClick={() => {
-                        if (selectedRow !== null && selectedRow2 !== null) {
-                            const newMatrix = [...currentMatrix];
-                            [newMatrix[selectedRow], newMatrix[selectedRow2]] = [newMatrix[selectedRow2], newMatrix[selectedRow]];
-                            setCurrentMatrix(newMatrix);
-                            setSelectedRow(null);
-                            setSelectedRow2(null);
-                            console.log("Rows swapped");
-                        }
-                    }}
-                >
-                    Swap Rows
-                </button>
-                <button
-                    className="bg-gray-900 rounded-lg shadow-md text-xl py-2 px-4 hover:bg-gray-500"
-                    type="button"
-                    onClick={() => {
-                        applyOperation();
-                        setSelectedRow(null);
-                        setSelectedRow2(null);
-                        setMultiplier("1");
-                        console.log("Matrix operation applied")
-                    }}
-                >
-                    Apply
-                </button>
+            <button
+                className="bg-blue-900 rounded-lg shadow-md text-xl py-2 px-4 hover:bg-blue-500 mr-4"
+                type="button"
+                onClick={() => {
+                if (selectedRow !== null && selectedRow2 !== null) {
+                    const newMatrix = [...currentMatrix];
+                    [newMatrix[selectedRow], newMatrix[selectedRow2]] = [newMatrix[selectedRow2], newMatrix[selectedRow]];
+                    setCurrentMatrix(newMatrix);
+                    setSelectedRow(null);
+                    setSelectedRow2(null);
+                    console.log("Rows swapped");
+                }
+                }}
+            >
+                Swap Rows
+            </button>
+            <button
+                className="bg-gray-900 rounded-lg shadow-md text-xl py-2 px-4 hover:bg-gray-500"
+                type="button"
+                onClick={() => {
+                applyOperation();
+                setSelectedRow(null);
+                setSelectedRow2(null);
+                setMultiplier("1");
+                console.log("Matrix operation applied")
+                }}
+            >
+                Apply
+            </button>
             </div>
             </div>
             <br></br>
@@ -299,21 +311,21 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
             Go Back
             </button>
             <button
-                className="hover:bg-gray-500 bg-gray-800 rounded-lg shadow-md py-2 px-4 ml-4"
-                type="button"
-                onClick={() => setCurrentMatrix(matrix)}
+            className="hover:bg-gray-500 bg-gray-800 rounded-lg shadow-md py-2 px-4 ml-4"
+            type="button"
+            onClick={() => setCurrentMatrix(matrix)}
             >
-                Reset Matrix
+            Reset Matrix
             </button>
             </div>  
             <div className="mt-4">
-                <h3 className="text-lg font-bold mb-2">Instructions:</h3>
-                <ul className="list-disc list-inside">
-                    <li>Click on two rows to select them or just one row to multiply it.</li>
-                    <li>Choose an operation (+ or -) and set a multiplier. (Can be fraction / decimal)</li>
-                    <li>Click "Apply" or press Enter to perform the operation on the selected row(s).</li>
-                    <li>The first row selected will always be the subject of the row operation.</li>
-                </ul>
+            <h3 className="text-lg font-bold mb-2">Instructions:</h3>
+            <ul className="list-disc list-inside">
+                <li>Click on two rows to select them or just one row to multiply it.</li>
+                <li>Choose an operation (+ or -) and set a multiplier. (Can be fraction / decimal)</li>
+                <li>Click "Apply" or press Enter to perform the operation on the selected row(s).</li>
+                <li>The first row selected will always be the subject of the row operation.</li>
+            </ul>
             </div>
         </div>
     );

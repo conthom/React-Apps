@@ -17,7 +17,7 @@ def get_matrix():
     rows, cols = sizes.get(difficulty, (2, 2))
     
     # Generate random matrix
-    matrix = np.random.randint(1, 10, size=(rows, cols)).tolist()
+    matrix = np.random.randint(0, 10, size=(rows, cols)).tolist()
     
     return jsonify({
         'matrix': matrix,

@@ -58,6 +58,9 @@ export default function Difficulty({
 
     return (
         <div className="max-w-lg w-full bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="flex justify-center items-center h-full">
+            <img src="/rref thing (1).png" alt="Image showing row reduced form of a matrix" className="object-contain" />
+            </div>   
             <div className="flex justify-center mt-4 text-lg font-bold">
                 <h2>Ready to practice matrix reduction?</h2>
             </div>

@@ -9,11 +9,18 @@ CORS(app, origins='*')
 def get_matrix():
     difficulty = request.args.get('difficulty')
     # Define matrix sizes based on difficulty
-    sizes = {
-        'easy': (2, 2),
-        'medium': (3, 3),
-        'hard': (4, 4)
-    }
+    if difficulty == 'medium':
+        if np.random.rand() > 0.5:
+            sizes = {'medium': (3, 4)}
+        else:
+            sizes = {'medium': (4, 3)}
+    elif difficulty == 'hard':
+        if np.random.rand() > 0.5:
+            sizes = {'hard': (4, 5)}
+        else:
+            sizes = {'hard': (5, 4)}
+    else:
+        sizes = {'easy': (2, 2)}
     rows, cols = sizes.get(difficulty, (2, 2))
     
     # Generate random matrix
@@ -36,12 +43,28 @@ def check_rref():
             return jsonify({'error': 'Matrix data is required'}), 400
 
         matrix_data = data['matrix']
-        shape = matrix_data['shape']
-        order = matrix_data['order']
-        flat_data = matrix_data['data']
+        shape = matrix_data.get('shape')
+        order = matrix_data.get('order', 0)
+        flat_data = matrix_data.get('data')
+
+        if not shape or not flat_data:
+            return jsonify({'error': 'Shape and data are required'}), 400
+
+        # Validate shape and data length
+        expected_size = shape[0] * shape[1]
+        if len(flat_data) != expected_size:
+            error_message = f"Data length ({len(flat_data)}) does not match shape {shape}."
+            print(error_message)
+            return jsonify({'error': error_message}), 400
 
         # Convert the flat list to a NumPy array
-        matrix = np.array(flat_data).reshape(shape)
+        try:
+            matrix = np.array(flat_data).reshape(shape)
+        except Exception as e:
+            error_message = f"Error reshaping flat data: {str(e)}"
+            print(error_message)
+            return jsonify({'error': error_message}), 400
+
         print(f"Reconstructed matrix:\n{matrix}")
 
         # Convert to SymPy matrix for RREF calculation
@@ -51,7 +74,7 @@ def check_rref():
         # Convert the RREF matrix back to a list for JSON serialization
         rref_matrix_list = rref_matrix.tolist()
 
-        # Now ensure that the elements in the list are regular Python types (e.g., int or float)
+        # Ensure elements in the list are regular Python types (e.g., int or float)
         rref_matrix_serializable = [[float(val) if isinstance(val, sp.Basic) else val for val in row] for row in rref_matrix_list]
 
         return jsonify({

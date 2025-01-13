@@ -25,21 +25,20 @@ import EndingScreen from "./EndingScreen";
  * @returns {JSX.Element} The rendered Matrix component.
  */
 export default function Matrix({ matrix = []}: { matrix: number[][]}) {
-    const [stopwatch, setTimer] = useState(0);
+    const [stopwatch, setStopwatch] = React.useState(0); // Timer starts at 5
+    const intervalRef = React.useRef(null); // Create a ref for interval
     const [selectedRow, setSelectedRow] = useState<number | null>(null);
     const [selectedRow2, setSelectedRow2] = useState<number | null>(null);
     const [selectedOperation, setSelectedOperation] = useState<string | null>(null);
     const [multiplier, setMultiplier] = useState<string>("1");
     const [rowMultiplier, setRowMultiplier] = useState<string>("");
-    const [currentMatrix, setCurrentMatrix] = useState<number[][]>(
-        matrix.map(row => row.map(value => Math.abs(value) < 1e-5 ? 0 : value))
-    );
+    const [currentMatrix, setCurrentMatrix] = useState<number[][]>(matrix);
     const [reducedMatrix, setReducedMatrix] = useState<number[][]>([]);
     const [isMatrixReduced, setIsMatrixReduced] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
-            setTimer((prev) => prev + 1);
+            setStopwatch((prev) => prev + 1);
         }, 1000);
 
         return () => clearInterval(timer);
@@ -101,55 +100,58 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
             setCurrentMatrix(newMatrix);
         }
     };
-    // Check if the matrix is in reduced row echelon form and print after each update
     useEffect(() => {
-        if (currentMatrix.length > 0) {
-            if(reducedMatrix.length === 0){
-                fetchReduced().then((reduced) => setReducedMatrix(reduced)); // Get reduced matrix and set it
-            }
-            setCurrentMatrix(roundMatrix(currentMatrix));
-            console.log("Current Matrix after update:", JSON.stringify(currentMatrix));
-            const reduced = JSON.stringify(currentMatrix) === JSON.stringify(reducedMatrix);
-            console.log("Matrix reduced?:", reduced);
-            setIsMatrixReduced(reduced);
-        }
-    }, [currentMatrix]);
-    // Function to get reduced matrix from backend
-    const fetchReduced = async () => {
-        if (reducedMatrix.length === 0) {
-            try {
-                // Flatten the matrix and determine its shape
-                const shape = [matrix.length, matrix[0].length];
-                const flatData = matrix.flat(); // Flatten the matrix
-                // Construct the JSON payload
-                const payload = {
-                    matrix: {
-                        shape: shape,
-                        order: 0, // Assuming row-major order
-                        data: flatData
+        // Fetch the reduced matrix only once when the component mounts or the initial matrix changes
+        const fetchReducedOnce = async () => {
+            if (reducedMatrix.length === 0) {
+                try {
+                    const shape = [matrix.length, matrix[0].length];
+                    const flatData = matrix.flat();
+                    const payload = {
+                        matrix: {
+                            shape: shape,
+                            order: 0,
+                            data: flatData,
+                        },
+                    };
+    
+                    const response = await fetch(`http://localhost:5000/check_rref`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+    
+                    const data = await response.json();
+                    console.log("Reduced matrix response:", data);
+    
+                    if (data.rref && data.rref.length > 0) {
+                        setReducedMatrix(data.rref);
+                    } else {
+                        console.warn("Reduced matrix is empty or undefined:", data);
                     }
-                };
-    
-                // Send the matrix with shape and data
-                const response = await fetch(`http://localhost:5000/check_rref`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
-                const data = await response.json();
-                console.log("Reduced matrix response:", data);
-    
-                if (!data.rref || data.rref.length === 0) {
-                    console.warn("Matrix is empty or undefined:", data);
+                } catch (err) {
+                    console.error('Error fetching reduced matrix:', err);
                 }
-                return data.rref;
-            } catch (err) {
-                console.error('Error fetching reduced matrix:', err);
             }
+        };
+    
+        fetchReducedOnce();
+    }, [matrix]); // Only run when the initial matrix changes
+    
+    useEffect(() => {
+        // Check if the matrix is reduced after updates
+        if (currentMatrix.length > 0 && reducedMatrix.length > 0) {
+            const roundedMatrix = roundMatrix(currentMatrix);
+            setCurrentMatrix(roundedMatrix);
+    
+            console.log("Current Matrix after update:", JSON.stringify(roundedMatrix));
+            const isReduced = JSON.stringify(roundedMatrix) === JSON.stringify(reducedMatrix);
+            console.log("Matrix reduced?:", isReduced);
+            setIsMatrixReduced(isReduced);
         }
-    };
+    }, currentMatrix); // Trigger when currentMatrix changes
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, action: () => void) => {
         if (e.key === 'Enter') {
@@ -159,7 +161,7 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
 
     return (
         
-        <div className="min-h-screen flex flex-col items-center justify-center relative">    
+        <div className="min-h-screen flex flex-col items-center justify-center relative"> 
             {isMatrixReduced && <EndingScreen timer={stopwatch} onRestart={() => setCurrentMatrix(matrix)} />}
             <div className="mb-4 text-lg font-bold">Time: {stopwatch}s</div>
             <div className="max-w-2xl w-full bg-gray-800 rounded-lg shadow-md p-6">

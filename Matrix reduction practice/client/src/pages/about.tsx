@@ -9,7 +9,9 @@ export default function About() {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
         <Header/>
-
+        <div className="flex justify-center items-center h-full">
+            <img src="/meme.jpg" alt="Meme" className="w-3/4 h-3/4 object-contain" />
+        </div>
 
 
         <Footer/>

@@ -1,3 +1,4 @@
+![img](Screenshot_2.png)
 # Row Reduced Echelon Form Practice Platform
 
 An interactive platform designed to help users practice and learn **Row Reduced Echelon Form (RREF)** reduction through hands-on matrix manipulation. The platform includes real-time feedback and tools for performing row operations like addition, subtraction, and scaling.

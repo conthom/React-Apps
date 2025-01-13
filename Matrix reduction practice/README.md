@@ -45,3 +45,4 @@ An interactive platform designed to help users practice and learn **Row Reduced 
    ```bash
    git clone https://github.com/your-repo-name.git
    cd your-repo-name
+Follow instructions within the client folder 

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import confetti from "canvas-confetti";
 
-const EndingScreen = ({ timer, onRestart }: { timer: number; onRestart: () => void }) => {
+const EndingScreen = ({ timer, onRestart }: { timer: number | null; onRestart: () => void }) => {
     useEffect(() => {
         // Trigger confetti animation when the component mounts
         confetti({

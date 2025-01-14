@@ -26,7 +26,6 @@ import EndingScreen from "./EndingScreen";
  */
 export default function Matrix({ matrix = []}: { matrix: number[][]}) {
     const [stopwatch, setStopwatch] = React.useState(0); // Timer starts at 5
-    const intervalRef = React.useRef(null); // Create a ref for interval
     const [selectedRow, setSelectedRow] = useState<number | null>(null);
     const [selectedRow2, setSelectedRow2] = useState<number | null>(null);
     const [selectedOperation, setSelectedOperation] = useState<string | null>(null);
@@ -35,6 +34,7 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
     const [currentMatrix, setCurrentMatrix] = useState<number[][]>(matrix);
     const [reducedMatrix, setReducedMatrix] = useState<number[][]>([]);
     const [isMatrixReduced, setIsMatrixReduced] = useState(false);
+    const [reducedTimer, setReducedTimer] = useState<number | null>(null); // Store the time when matrix is reduced
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -129,7 +129,6 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
                 }
             }
         };
-    
         fetchReducedOnce();
     }, [matrix]); // Only run when the initial matrix changes
     
@@ -144,6 +143,9 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
             );
             console.log("Matrix reduced?:", isReduced);
             setIsMatrixReduced(isReduced);
+            if (isReduced && reducedTimer === null) {
+                setReducedTimer(stopwatch);
+            }
         }
     }, currentMatrix); // Trigger when currentMatrix changes
 
@@ -155,8 +157,8 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center relative"> 
-            {isMatrixReduced && <EndingScreen timer={stopwatch} onRestart={() => setCurrentMatrix(matrix)} />}
-            <div className="mb-4 text-lg font-bold">Time: {stopwatch}s</div>
+            {isMatrixReduced && <EndingScreen timer={reducedTimer} onRestart={() => setCurrentMatrix(matrix)} />}
+            <div className="mb-4 text-lg font-bold">Time: {isMatrixReduced ? reducedTimer : stopwatch}s</div>
             <div className="max-w-2xl w-full bg-gray-800 rounded-lg shadow-md p-6">
             <table className="w-full border-collapse border border-gray-500 text-gray-200 table-fixed">
             <tbody>

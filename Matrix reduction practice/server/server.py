@@ -44,7 +44,6 @@ def check_rref():
 
         matrix_data = data['matrix']
         shape = matrix_data.get('shape')
-        order = matrix_data.get('order', 0)
         flat_data = matrix_data.get('data')
 
         if not shape or not flat_data:
@@ -79,12 +78,10 @@ def check_rref():
 
         return jsonify({
             'rref': rref_matrix_serializable,
-            'is_rref': sympy_matrix.equals(rref_matrix)
         })
     except Exception as e:
         print(f"Error: {str(e)}")  # Detailed error logging
         return jsonify({'error': str(e)}), 500
 
-    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

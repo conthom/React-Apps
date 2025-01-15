@@ -6,19 +6,7 @@ export default function Footer() {
       <div className="text-sm">
         Made with ❤️ using <strong>Next.js</strong>
       </div>
-      <div className="text-sm">
-        <span>Matrix Reduction Practice Platform © 2025</span>
-      </div>
-      <div className="text-sm">
-        <a
-          href="https://github.com/conthom"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:underline"
-        >
-          Visit GitHub
-        </a>
-      </div>
+
     </footer>
   );
 }

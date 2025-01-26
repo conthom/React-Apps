@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Image from 'next/image';
 export default function About() {
     return (
         <div className="bg-black text-white h-screen">
@@ -10,7 +11,7 @@ export default function About() {
             </Head>
         <Header/>
         <div className="flex justify-center items-center h-full">
-            <img src="/meme.jpg" alt="Meme" className="w-3/4 h-3/4 object-contain" />
+            <Image src="/meme.jpg" alt="Meme" className="w-3/4 h-3/4 object-contain" />
         </div>
         <Footer/>
         </div>

@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-
+import Image from 'next/image';
 interface ResponseData {
     isLoading: boolean;
     setIsLoading: (isLoading: boolean) => void;
-    setResponse: (response: any) => void;
-    setError: (error: string | null) => void;
+    setResponse: (response: { matrix: number[][] }) => void;
 }
 
 export default function Difficulty({
     isLoading,
     setIsLoading,
     setResponse,
-    setError,
 }: ResponseData) {
     const [difficulty, setLocalDifficulty] = useState("easy");
 
@@ -22,9 +20,8 @@ export default function Difficulty({
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        setResponse(null); // Clear previous matrix
+        setResponse({ matrix: [] }); // Clear previous matrix
         setIsLoading(true);
-        setError(null); // Clear previous errors
 
         try {
             // Fetch the matrix from the backend
@@ -49,9 +46,8 @@ export default function Difficulty({
 
             // Set the received matrix in state
             setResponse(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
+        } 
+        finally {
             setIsLoading(false);
         }
     };
@@ -59,7 +55,7 @@ export default function Difficulty({
     return (
         <div className="max-w-lg w-full bg-gray-800 rounded-lg shadow-md p-6">
             <div className="flex justify-center items-center h-full">
-            <img src="/rref thing (1).png" alt="Image showing row reduced form of a matrix" className="object-contain" />
+            <Image src="/rref thing (1).png" alt="Image showing row reduced form of a matrix" className="object-contain" />
             </div>   
             <div className="flex justify-center mt-4 text-lg font-bold">
                 <h2>Ready to practice matrix reduction?</h2>

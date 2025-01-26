@@ -5,8 +5,6 @@ import Difficulty from "./Difficulty";
 export default function Main() {
     const [isLoading, setIsLoading] = useState(false);
     const [response, setResponse] = useState<{ matrix: number[][]} | null>(null);
-    const [error, setError] = useState<string | null>(null);
-
     return (
         <div className="flex justify-center items-center min-h-screen">
             {!response ? (
@@ -14,7 +12,6 @@ export default function Main() {
                     setIsLoading={setIsLoading} 
                     setResponse={setResponse} 
                     isLoading={isLoading} 
-                    setError={setError} 
                 />
             ) : (
                 Array.isArray(response.matrix) && response.matrix.length > 0 && (

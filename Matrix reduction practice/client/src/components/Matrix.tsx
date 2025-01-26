@@ -25,6 +25,7 @@ import EndingScreen from "./EndingScreen";
  * @returns {JSX.Element} The rendered Matrix component.
  */
 export default function Matrix({ matrix = []}: { matrix: number[][]}) {
+    // Environment variables
     const [stopwatch, setStopwatch] = React.useState(0); // Timer starts at 5
     const [selectedRow, setSelectedRow] = useState<number | null>(null);
     const [selectedRow2, setSelectedRow2] = useState<number | null>(null);
@@ -156,7 +157,7 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center relative"> 
+        <div className="min-h-screen flex flex-col items-center justify-center relative">
             {isMatrixReduced && <EndingScreen timer={reducedTimer} onRestart={() => setCurrentMatrix(matrix)} />}
             <div className="mb-4 text-lg font-bold">Time: {isMatrixReduced ? reducedTimer : stopwatch}s</div>
             <div className="max-w-2xl w-full bg-gray-800 rounded-lg shadow-md p-6">
@@ -319,7 +320,7 @@ export default function Matrix({ matrix = []}: { matrix: number[][]}) {
             <ul className="list-disc list-inside">
                 <li>Click on two rows to select them or just one row to multiply it.</li>
                 <li>Choose an operation (+ or -) and set a multiplier. (Can be fraction / decimal)</li>
-                <li>Click "Apply" or press Enter to perform the operation on the selected row(s).</li>
+                <li>Click Apply or press Enter to perform the operation on the selected row(s).</li>
                 <li>The first row selected will always be the subject of the row operation.</li>
             </ul>
             </div>
